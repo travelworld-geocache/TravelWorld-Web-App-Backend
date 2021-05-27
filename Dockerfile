@@ -1,14 +1,13 @@
-FROM gradle:6.3.0-jdk11-alpine AS build
-COPY --chown=gradle:gradle . /home/gradle/src
-WORKDIR /home/gradle/src
-RUN gradle build --no-daemon 
+FROM openjdk:8-alpine
 
-FROM openjdk:8-jre-slim
+# Required for starting application up.
+RUN apk update && apk add /bin/sh
 
-EXPOSE 8080
+RUN mkdir -p /opt/app
+ENV PROJECT_HOME /opt/app
 
-RUN mkdir /app
+COPY /home/gradle/src/build/libs/*.jar $PROJECT_HOME/spring-boot-mongo.jar
 
-COPY --from=build /home/gradle/src/build/libs/*.jar /app/spring-boot-application.jar
+WORKDIR $PROJECT_HOME
 
-ENTRYPOINT ["java", "-XX:+UnlockExperimentalVMOptions", "-XX:+UseCGroupMemoryLimitForHeap", "-Djava.security.egd=file:/dev/./urandom","-jar","/app/spring-boot-application.jar"]
+CMD ["java" ,"-jar","./spring-boot-mongo.jar"]
